@@ -1,7 +1,7 @@
 # turbok8s
 turbok8s (*"turbo k8s"* or *"turbo kube"*) enhances a kubernetes cluster with bolt-on additions to make it "ready to run" your app. Like a turbo on your car, it uses the existing engine (kubernetes) to provide enhanced functionality and performance (the turbo [and other things]). This is essentially a kubernetes cluster, with a logical subset of the CNCF projects "ready to run" your app in a production-like manner. turbok8s gives you **"everything you'll probably want"** to run your application on kubernetes!
 
-The input to turbok8s is a cluster. The output of turbok8s is a turbo-charged cluster with all of the useful stuff ready to go! turbok8s is cluster and cloud-provider agnostic, provided the minimum hardware requirements are met.
+The input to turbok8s is a cluster. The output of turbok8s is a turbo-charged cluster with all the useful stuff ready to go! turbok8s is cluster and cloud-provider agnostic, provided the minimum hardware requirements are met.
 
 # Philisophy and Goals
 The purpose behind turbok8s is to provide an easy way run your application in kubernetes, with perfect parity across all of your environments, while also removing the chore of installing the same services over and over. If you are deploying an application to Kubernetes, the mission of turbok8s is to give you all the tools you need to do that with minimal configuration, and be up in running in minutes, while also being prod-ready and ready to scale. turbok8s in its default form gives you "everything you'll probably want" to run your applicaiton.
@@ -167,9 +167,6 @@ Study showing that Vault is the way to go: https://github.com/derailed pretty mu
 # Vendors
 Organizations certified to help you with your turbok8s installation, and Kubernetes in general.
 
-> [GK Consulting](https://gkconsulting.dev/)
- <form action="https://gkconsulting.dev/#ready-to-discuss-further">
-     <input type="submit" value="Hire!" />
- </form>
+> [GK Consulting](https://gkconsulting.dev/#ready-to-discuss-further)
 
 Love Kubernetes? Love turbok8s? Become a SeedStack Certified Vendor!
