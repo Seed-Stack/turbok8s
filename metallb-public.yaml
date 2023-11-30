@@ -1,0 +1,9 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: company-wide-entrypoint
+  namespace: metallb-system
+spec:
+  addresses:
+  - # list of public address pools you want metalLB to manage. for single IP's use a /32 CIDR notation
+  autoAssign: true
