@@ -21,6 +21,14 @@ Constraints and criteria for turbok8s:
 - Do not use any proprietary solitions (such as cloud load balancers). Be portable to any cluster
 - Ready to scale. Work in single-master single-node environments, as well as multi-node HA environments, as well as be able to upgrade from the former to the latter
 
+# A Note on Installation Methods
+Being opinionated, we prefer installing things into Kubernetes via certain methods. The order, by precedence:
+- Operators installed via the [Operator Lifecycle Manager](https://github.com/operator-framework/operator-lifecycle-manager)
+- Operators installed ad-hoc
+- Created through kustomize
+- Created through raw manifest
+- Helm
+
 # A Note on Cost
 Assuming you run your cluster on some type of public cloud or Virtual Server Provider (VPS), turbok8s aims to give you predictiable, fixed monthly costs, which are especially crucial for startups, small teams, and solo devs. Variable monthly costs are one of the primary reasons we believe so strongly in self-hosting wherever possible on k8s! turbok8s strives to give you a fixed monthly operational cost, which only increases when you are actually ready to scale, while still remaining fixed and your desired scale.
 
