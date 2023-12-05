@@ -59,6 +59,69 @@ The [Operator Lifecycle Manager](https://olm.operatorframework.io/) is a wonderf
       packageserver      2/2     2            2           9m29s
       ```
 
+# MetalLB
+MetalLB allows your cluster to perform load balancing itself! One of the most expensive aspects of cloud hosting is paying for load balancers, so doing this in-cluster is a great way to go.
+
+## OperatorHub
+This pathway is not yet working, but is the ultimate goal.
+
+1. Create a `subscription` to the [MetalLB Operator](https://operatorhub.io/operator/metallb-operator) for the OLM
+  - You can grab the subscription manifest from here:
+      ```
+      curl https://operatorhub.io/install/metallb-operator.yaml > metallb/metallb-operator-subscription.yaml
+      ```
+  - Or use the manifest already at `metallb/metallb-operator-subscription.yaml`
+2. Create the subscription
+    ```
+    k apply -f metallb/metallb-operator-subscription.yaml
+    ```
+3. Verify the operator is up - specifically make sure that `PHASE` is `Succeeded`, not `Installing` or anything else. You can `watch` with `-w`
+    ```
+    k get clusterserviceversions -n operators
+
+    # should look like this
+    NAME                        DISPLAY            VERSION   REPLACES                   PHASE
+    metallb-operator.v0.13.11   MetalLB Operator   0.13.11   metallb-operator.v0.13.3   Succeeded
+    ```
+
+## Manifest
+The current way of installing MetalLB does still work with an operator, but not through Operator Hub.
+
+1. Grab the MetalLB manifest and apply it:
+    ```
+    curl https://github.com/metallb/metallb-operator/blob/main/bin/metallb-operator.yaml > metallb/metallb-operator.yaml
+    kubectl apply -f metallb/metallb-operator.yaml
+    ```
+  - This should give you an operator for MetalLB in the `metallb-system` namespace
+  - Verify that your `metallb-operator-controller-manager` and `metallb-operator-webhook-server` deployments are running
+    ```
+    k get deploy -n metallb-system
+    NAME                                                            DESIRED   CURRENT   READY   AGE
+    replicaset.apps/metallb-operator-controller-manager-57f5844df   1         1         1       106s
+    replicaset.apps/metallb-operator-webhook-server-678dbcb959      1         1         1       106s
+    ```
+  - This will also install all of the MetalLB CRD's
+    ```
+    k get crd | grep -i metallb
+    ```
+2. Create a MetalLB resource
+    ```
+    k apply -f metallb/metallb.yaml
+    ```
+  - This will launch the "functional" parts of MetalLB, you should see the `speaker` and `controller` running
+    ```
+    k get deploy -n metallb-system --field-selector metadata.name=controller
+    
+    NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+    controller   1/1     1            1           9m37s
+
+    k get daemonsets.apps -n metallb-system 
+
+    NAME      DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+    speaker   1         1         1       1            1           kubernetes.io/os=linux   10m
+    ```
+
+
 # Argo CD
 [OperatorHub reference](https://operatorhub.io/operator/argocd-operator)
 
@@ -72,7 +135,7 @@ The [Operator Lifecycle Manager](https://olm.operatorframework.io/) is a wonderf
     ```
     k apply -f argocd/argocd-operator-subscription.yaml
     ```
-3. Verify the operator is up
+3. Verify the operator is up - specifically make sure that `PHASE` is `Succeeded`, not `Installing` or anything else. You can `watch` with `-w`
     ```
     k get clusterserviceversions -n operators
 
