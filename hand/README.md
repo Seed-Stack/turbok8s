@@ -1,6 +1,6 @@
 Deploy turbok8s step-by-step by hand! Remember, turbok8s is nothing special, merely an opinionated method of giving you "everything you'll probably want". As such, it's only fitting that there are clear, step-by-step instructions for deploying things by hand without using any turbok8s tooling. We also hope by following this install method, you'll find that Kubernetes isn't that scary after all!
 
-You may wish to go through this guide for learning purposes, or for customizing your own solution.
+You may wish to go through this guide for learning purposes, or for customizing your own solution. This guide is intentionally pedantic  to assist with comprehension as well as help show the development process itself. [kustomize](../kustomize/README.md) is the recommended and quickest way of setting up turbok8s however. 
 
 Sections are in order of how they must be completed for things to work properly in turbok8s' default configuraiton.
 
@@ -20,6 +20,20 @@ You'll need some basics for things like grabbing yaml from remote sources and pa
 # Assumptions
 - This guide assumes you're in the `hand` directory
 - `k` is used as an alias for `kubectl`
+
+# Cluster Networking
+
+## Local
+If you're running turbok8s locally and plan to use MetalLB, make sure to start with a dedicated network interface, otherwise the default docker-bridge (or something similar for your CRI) will be used. We'll use Calico here:
+```
+minikube start --cni=calico
+```
+
+## Prod-Like / Cloud / Datacenter
+You probably already have your cluster deployed with some sort of CNI. Make sure that you have a pool of private addresses your nodes are able to see, and (assuming you wish for your cluster to be reachable over the public internet), at least one public IP address also visible to your nodes. Turbok8s assumes Calico for your CNI, but you can adopt whichever CNI you prefer, the only thing that matters is that the IP addresses are visible within the cluster so that MetalLB can manage them.
+
+# CNI Configuration
+We'll use Calico as our CNI
 
 # OLM
 The [Operator Lifecycle Manager](https://olm.operatorframework.io/) is a wonderful project that deploys and manages k8s operators, which are our preferred way of running applications in k8s. turbok8s attempts to install as much as possible through this tool.
@@ -121,6 +135,11 @@ The current way of installing MetalLB does still work with an operator, but not 
     speaker   1         1         1       1            1           kubernetes.io/os=linux   10m
     ```
 
+
+## Configuration
+We need to give MetalLB some IP's to manage! Generally-speaking, and how turbok8s behaves in its default configuration, you'll want a *pool* of private IP's, and at least one *public* IP (but you could have a pool if you want). The private IP pool corresponds to a range of IP's in your private network you want to load balance on, whereas the [public ip](../README.md#external-inputs-and-extra-cluster-requirements-and-assumptions) would typically be something you pay for to serve as the "public entrypoint" into your cluster. 
+
+This is where there will be a difference between running locally and running in a production-like setting. Locally, you probably don't have a private VPC running on your laptop, but you *do* probably have LAN you're connected to
 
 # Argo CD
 [OperatorHub reference](https://operatorhub.io/operator/argocd-operator)

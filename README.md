@@ -3,6 +3,9 @@ turbok8s (*"turbo k8s"* or *"turbo kube"*) enhances a kubernetes cluster with bo
 
 The input to turbok8s is a cluster. The output of turbok8s is a turbo-charged cluster with all the useful stuff ready to go! turbok8s is cluster and cloud-provider agnostic, provided the minimum hardware requirements are met.
 
+# Status
+Turbok8s is under active development. The [hand](hand/README.md) deploy method is first being worked, to be followed up by a [kustomize](kustomize/README.md) install method.
+
 # Philisophy and Goals
 The purpose behind turbok8s is to provide an easy way run your application in kubernetes, with perfect parity across all of your environments, while also removing the chore of installing the same services over and over. If you are deploying an application to Kubernetes, the mission of turbok8s is to give you all the tools you need to do that with minimal configuration, and be up in running in minutes, while also being prod-ready and ready to scale. turbok8s in its default form gives you "everything you'll probably want" to run your applicaiton.
 
@@ -43,7 +46,10 @@ The case study and the development of turbok8s itself demonstrate several things
 
 
 # Hardware Requirements
-This has not been extensively tested yet to find out the limits, but everything runs just fine on a 2CPU 4G RAM system. You can probably get away with less as well. 
+This has not been extensively tested yet to find out the limits, but everything runs just fine on a 2CPU 4G RAM system. You can probably get away with less as well.
+
+## Cluster-Specific Things
+- turbok8s is tested and configured with [calico](https://github.com/projectcalico/calico) for its [CNI](https://github.com/containernetworking/cni). This doesn't mean others won't work, but in the name of "picking one to get things working", Calico is assumed and guides and default configuration will reference it
 
 # External Inputs and Extra-Cluster Requirements and Assumptions
 We are strong believers that you should strive to self-host just about everything. Soapbox can be found [here](https://isaacgentz.com/tech/everything-on-kubernetes) and [here](https://isaacgentz.com/tech/cloud-spaghetti). That said, there are some things where it does make sense to swallow your pride and pay, for the cost of doing it yourself will likely far outweight the benefit. turbok8s aims to give you as many tools as possible to self-host, while assuming that some basic things do indeed exist outside of the cluster. 
