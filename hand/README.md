@@ -26,8 +26,11 @@ You'll need some basics for things like grabbing yaml from remote sources and pa
 ## Local
 If you're running turbok8s locally and plan to use MetalLB, make sure to start with a dedicated network interface, otherwise the default docker-bridge (or something similar for your CRI) will be used. We'll use Calico here:
 ```
-minikube start --cni=calico
+minikube start --network-plugin=cni --memory='4G' --cpus='2'
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.4/manifests/calico.yaml
 ```
+
+Note we're [not using an operator here](../README.md#calico)
 
 ## Prod-Like / Cloud / Datacenter
 You probably already have your cluster deployed with some sort of CNI. Make sure that you have a pool of private addresses your nodes are able to see, and (assuming you wish for your cluster to be reachable over the public internet), at least one public IP address also visible to your nodes. Turbok8s assumes Calico for your CNI, but you can adopt whichever CNI you prefer, the only thing that matters is that the IP addresses are visible within the cluster so that MetalLB can manage them.

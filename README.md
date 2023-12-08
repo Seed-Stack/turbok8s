@@ -74,17 +74,9 @@ turbok8s is not perfect. Tools included here are not any better or worse than al
 turbok8s would not be possible without all of the wonderful tools upon which it relies!
 
 # Running
-Let's get this thing deployed!
-## local dev
-"local dev" refers to specifically running on your own machine. 
+There are various ways to get started with turbok8s. For an in-depth, manual, and totally-configurable experience that still takes under an hour see [hand deploy](hand/README.md).
 
-### Setup
-There are many great tools for running locally, such as microk8s, minikube, k3s, etc. Currently we prefer using minikube, but anything works.
-
-1. Make a cluster
-  1. `minikube start`
-    1. Note that the default options are fine here, because it creates a container with 2vCPU and 4G RAM, which is typically the smallest cloud instance you can create, and the default recommended size
-1. For each service, `kubectl apply` or other similar instruction (see below)
+For a one-liner that's still just as configurable and you can "hit go and go make coffee" see [kustomize](kustomize/README.md)
 
 ### services
 Because most personal machines aren't directly exposed to the internet, there are only a small subset of useful services that are currently spun up locally, however the ultimate goal is to be able to run everthing locally so you can mirror production.
@@ -177,6 +169,9 @@ Also wrote a small `serviceaccount` with `clusterrolebinding` to `cluster-admin`
 
 ## hashicorp Vault
 Study showing that Vault is the way to go: https://github.com/derailed pretty much what everyone's using. However the awesome thing is that they've released an [operator](https://developer.hashicorp.com/vault/tutorials/kubernetes/vault-secrets-operator) for it now, which simply interfaces with normal k8s secrets, so it's designed to be "install and use" and way less operational overhead for hosting. 
+
+## calico
+CNI of choice. Calico is one of the few places where an operator does not make as much sense since a CNI operates at lower-level than app-level (core infrastructure), and most clusters will already have a CNI in-place rather than one managed in-cluster with an operator. Turbok8s assumes you already have the Calico CNI installed in your cluster (or you can start it locally with Minikube)
 
 # Vendors
 Organizations certified to help you with your turbok8s installation, and Kubernetes in general.
