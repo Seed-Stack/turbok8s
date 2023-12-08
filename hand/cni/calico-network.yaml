@@ -1,12 +1,19 @@
-apiVersion: projectcalico.org/v3
-kind: CalicoNetwork
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
 metadata:
-  name: default
+  name: private-ips
 spec:
-  ipPools:
-  - cidr: 172.16.0.0/16 # pool of private IP's for metalLB to manage
-    natOutgoing: true
-    disabled: false
-  - cidr: 10.10.10.10/32
-    natOutgoing: false
-    disabled: false # simulate a single public IP you'd pay for
+  cidr: 172.16.0.0/16 # pool of private IP's for metalLB to manage
+  natOutgoing: true
+  disabled: false
+  nodeSelector: all()
+---
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
+metadata:
+  name: public-entrypoint
+spec:
+  cidr: 10.10.10.10/32
+  natOutgoing: false
+  disabled: false # simulate a single public IP you'd pay for
+  nodeSelector: all()
