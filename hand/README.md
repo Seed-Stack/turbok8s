@@ -215,7 +215,28 @@ The current way of installing MetalLB does still work with an operator, but not 
 ## Configuration
 We need to give MetalLB some IP's to manage! Generally-speaking, and how turbok8s behaves in its default configuration, you'll want a *pool* of private IP's, and at least one *public* IP (but you could have a pool if you want). The private IP pool corresponds to a range of IP's in your private network you want to load balance on, whereas the [public ip](../README.md#external-inputs-and-extra-cluster-requirements-and-assumptions) would typically be something you pay for to serve as the "public entrypoint" into your cluster. 
 
-This is where there will be a difference between running locally and running in a production-like setting. Locally, you probably don't have a private VPC running on your laptop, but you *do* probably have LAN you're connected to
+We already have our IP pools ready to go from the [Cluster Networking](./README.md#cluster-networking) step above. Apply this config:
+```
+k apply -f metallb/metallb-local.yaml
+```
+
+Validate that Calico, your Container Networking Interface(CNI) shows the address pools that MetalLB (your load balancer) will be using:
+```
+# Calcio IP Pools
+k get ippools.crd.projectcalico.org
+NAME                  AGE
+default-ipv4-ippool   14m
+private-ips           3m47s <-- THIS ONE
+public-entrypoint     3m47s <-- AND THIS ONE
+
+# MetalLB IP Pools
+k get ipaddresspools.metallb.io -n metallb-system
+NAME                AUTO ASSIGN   AVOID BUGGY IPS   ADDRESSES
+private-ips         true          false             ["192.168.86.200/32"]
+public-entrypoint   true          false             ["134.195.227.140/32"]
+
+```
+If you `describe` each of the `ippools` you should see the CIDR's matching that of MetalLB
 
 # Argo CD
 [OperatorHub reference](https://operatorhub.io/operator/argocd-operator)

@@ -4,20 +4,20 @@
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
-  name: service-ips
+  name: private-ips
   namespace: metallb-system
 spec:
   addresses:
-  - # private IP range from your LAN
+  - # private IP range from your LAN (with subnet CIDR [/32 for single IP])
   autoAssign: true
 ---
 # IP(s) you'll receive traffic into your cluster on
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
-  name: service-ips
+  name: public-entrypoint
   namespace: metallb-system
 spec:
   addresses:
-  - # your public IP
+  - # your public IP (with /32 CIDR)
   autoAssign: true
