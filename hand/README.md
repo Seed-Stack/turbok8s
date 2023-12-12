@@ -21,22 +21,95 @@ You'll need some basics for things like grabbing yaml from remote sources and pa
 - This guide assumes you're in the `hand` directory
 - `k` is used as an alias for `kubectl`
 
-# Cluster Networking
+# Cluster Setup
+This is just for setting up a basic cluster for testing, because otherwise Turbok8s assumes you already have a cluster you'd like to install into!
 
 ## Local
-If you're running turbok8s locally and plan to use MetalLB, make sure to start with a dedicated network interface, otherwise the default docker-bridge (or something similar for your CRI) will be used. We'll use Calico here:
+If you want to use MetalLB see [Local Cluster Networking Setup](./README.md#local-1)
+If you're running locally and **don't plan on using MetalLB**, start `minikube` like so:
+```
+minikube start--memory='4G' --cpus='2'
+```
+
+## Prod-like / Cloud / Datacenter
+Start however you like, just ensure you have a least 1 node with 4G RAM and 2 vCPU.
+
+# Cluster Networking
+This step is only required if setting up MetalLB. Otherwise skip to [OLM setup](./README.md#olm).
+
+To use MetalLB we must make pools of "*real*" IP addresses avaliable for load balancing within the cluster. This step may look a little different depending on if you're running locally or in the cloud/datacenter, because you have complete control over your nodes locally (e.g. with `minikube`) whereas in the cloud/datacenter you may provision IP's/subnets in a declaratice manner and have them "appear" in your cluster, with all of the networking infrastructure managed for you.
+
+
+
+## Local
+What you'll end up with is really cool! You'll end up with "private" services, which only devices on your LAN can reach, and also "public" services, which are reachable from the internet!
+
+Locally, this looks like creating an `IPPool` of private IP addresses that exist in your LAN, as well as finding your public IP on which to serve traffic coming in from the internet. 
+
+Start `minikube` with a dedicated network interface, otherwise the default docker-bridge (or something similar for your CRI) will be used. We'll use Calico here:
 ```
 minikube start --network-plugin=cni --memory='4G' --cpus='2'
 kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.4/manifests/calico.yaml
 ```
 
-Note we're [not using an operator here](../README.md#calico)
+> Note we're [not using an operator here](../README.md#calico)
+
+Because you're running locally, we need to find out some information about your LAN. Find out your LAN subnet:
+```
+ip a
+
+# should see something like
+2: wlp0s20f3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether fc:b3:bc:92:f4:e6 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.86.107/24 brd 192.168.86.255 scope global dynamic noprefixroute wlp0s20f3
+       valid_lft 76825sec preferred_lft 76825sec
+    inet6 fe80::80a4:a14:918d:4b3c/64 scope link noprefixroute 
+       valid_lft forever preferred_lft forever
+```
+In the above example, you can see the IP adddress of the WiFi card in the computer used for this demo: `192.168.86.107` (`/24`) is the subnet. This gives a LAN subnet of `192.168.86.0/24`.
+
+Now run a scan of your LAN to find a slice of it that isn't being used:
+```
+nmap -sP <your home LAN e.g. 192.168.86.0/24>
+```
+Based on the results of this, find any small slice of IP's (even just a single one is fine!) that are unused. For example, here is a scan of a home LAN:
+```
+Starting Nmap 7.94 ( https://nmap.org ) at 2023-12-11 06:00 MST
+Nmap scan report for 192.168.86.1
+Host is up (0.016s latency).
+Nmap scan report for 192.168.86.24
+Host is up (0.014s latency).
+Nmap scan report for 192.168.86.99
+Host is up (0.019s latency).
+Nmap scan report for brainbox.lan (192.168.86.107)
+Host is up (0.000033s latency).
+Nmap scan report for tstat-29b664.lan (192.168.86.140)
+Host is up (0.020s latency).
+Nmap scan report for canona3a68f.lan (192.168.86.149)
+Host is up (0.059s latency).
+Nmap scan report for galaxy-s22-ultra.lan (192.168.86.151)
+Host is up (0.0058s latency).
+Nmap done: 256 IP addresses (7 hosts up) scanned in 2.44 seconds
+```
+We have many free IP addresses. Let's grab a small range of `192.168.86.192/28` to use for our private services. We could also use even just a single IP, such as `192.168.86.192/32` (`/32` to represent a range of 1 IP). Whatever you choose, add this range to `cni/calico-network-local.yaml` in the "private" section and also to `metallb/metal-lb-local.yaml`.
+
+> Although not necessary (especially for a quick demo) It's recommended to configure your router reserve this IP range so it is not handed out by DHCP.
+
+For the public IP, you can go to a site like [ip chicken](https://www.ipchicken.com/) to find your home's public IP. Add this in to the "public" section of `cni/calic-network-local.yaml` and `metallb/metal-lb-local.yaml`
+
+Now create some `IPPools` that will make IP's avaliable in the cluster for use. Again this is Calico-specific but you should be able to use any CNI:
+
+```
+k apply -f cni/calico-network-local.yaml
+```
+
+We'll `apply` the metalLB configuration in a later step.
+
+
 
 ## Prod-Like / Cloud / Datacenter
 You probably already have your cluster deployed with some sort of CNI. Make sure that you have a pool of private addresses your nodes are able to see, and (assuming you wish for your cluster to be reachable over the public internet), at least one public IP address also visible to your nodes. Turbok8s assumes Calico for your CNI, but you can adopt whichever CNI you prefer, the only thing that matters is that the IP addresses are visible within the cluster so that MetalLB can manage them.
 
-# CNI Configuration
-We'll use Calico as our CNI
 
 # OLM
 The [Operator Lifecycle Manager](https://olm.operatorframework.io/) is a wonderful project that deploys and manages k8s operators, which are our preferred way of running applications in k8s. turbok8s attempts to install as much as possible through this tool.
@@ -79,7 +152,7 @@ The [Operator Lifecycle Manager](https://olm.operatorframework.io/) is a wonderf
 # MetalLB
 MetalLB allows your cluster to perform load balancing itself! One of the most expensive aspects of cloud hosting is paying for load balancers, so doing this in-cluster is a great way to go.
 
-## OperatorHub
+## OperatorHub (alpha)
 This pathway is not yet working, but is the ultimate goal.
 
 1. Create a `subscription` to the [MetalLB Operator](https://operatorhub.io/operator/metallb-operator) for the OLM
@@ -101,12 +174,12 @@ This pathway is not yet working, but is the ultimate goal.
     metallb-operator.v0.13.11   MetalLB Operator   0.13.11   metallb-operator.v0.13.3   Succeeded
     ```
 
-## Manifest
+## Manifest (stable)
 The current way of installing MetalLB does still work with an operator, but not through Operator Hub.
 
 1. Grab the MetalLB manifest and apply it:
     ```
-    curl https://github.com/metallb/metallb-operator/blob/main/bin/metallb-operator.yaml > metallb/metallb-operator.yaml
+    curl https://raw.githubusercontent.com/metallb/metallb-operator/main/bin/metallb-operator.yaml > metallb/metallb-operator.yaml
     kubectl apply -f metallb/metallb-operator.yaml
     ```
   - This should give you an operator for MetalLB in the `metallb-system` namespace

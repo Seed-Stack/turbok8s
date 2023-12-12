@@ -3,7 +3,7 @@ kind: IPPool
 metadata:
   name: private-ips
 spec:
-  cidr: 172.16.0.0/16 # pool of private IP's for metalLB to manage
+  cidr: # <ADD HERE> simulate private VPC subnet, in this case a slice of your LAN
   natOutgoing: true
   disabled: false
   nodeSelector: all()
@@ -13,7 +13,7 @@ kind: IPPool
 metadata:
   name: public-entrypoint
 spec:
-  cidr: 10.10.10.10/32
+  cidr: # <ADD HERE> simulate a public IP you would own/lease in the cloud/datacenter
   natOutgoing: false
   disabled: false # simulate a single public IP you'd pay for
   nodeSelector: all()
