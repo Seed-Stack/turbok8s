@@ -1,6 +1,6 @@
 Deploy turbok8s step-by-step by hand! Remember, turbok8s is nothing special, merely an opinionated method of giving you "everything you'll probably want". As such, it's only fitting that there are clear, step-by-step instructions for deploying things by hand without using any turbok8s tooling. We also hope by following this install method, you'll find that Kubernetes isn't that scary after all!
 
-You may wish to go through this guide for learning purposes, or for customizing your own solution. This guide is intentionally pedantic  to assist with comprehension as well as help show the development process itself. [kustomize](../kustomize/README.md) is the recommended and quickest way of setting up turbok8s however. 
+You may wish to go through this guide for learning purposes, or for customizing your own solution. This guide is intentionally pedantic  to assist with comprehension as well as help show the development process itself.
 
 Sections are in order of how they must be completed for things to work properly in turbok8s' default configuraiton.
 
@@ -51,6 +51,8 @@ Start `minikube` with a dedicated network interface, otherwise the default docke
 minikube start --network-plugin=cni --memory='4G' --cpus='2'
 kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.4/manifests/calico.yaml
 ```
+
+> Need conntrack to start with no driver so services are avaliable on the host
 
 > Note we're [not using an operator here](../README.md#calico)
 
@@ -148,6 +150,10 @@ The [Operator Lifecycle Manager](https://olm.operatorframework.io/) is a wonderf
       olm-operator       1/1     1            1           9m59s
       packageserver      2/2     2            2           9m29s
       ```
+3. You can see a bunch of operators that are avaliable out of the box:
+    ```
+    k get packagemanifests.packages.operators.coreos.com
+    ```
 
 # MetalLB
 MetalLB allows your cluster to perform load balancing itself! One of the most expensive aspects of cloud hosting is paying for load balancers, so doing this in-cluster is a great way to go.
@@ -179,7 +185,7 @@ The current way of installing MetalLB does still work with an operator, but not 
 
 1. Grab the MetalLB manifest and apply it:
     ```
-    curl https://raw.githubusercontent.com/metallb/metallb-operator/main/bin/metallb-operator.yaml > metallb/metallb-operator.yaml
+    curl https://raw.githubusercontent.com/metallb/metallb-operator/v0.13.11/bin/metallb-operator.yaml > metallb/metallb-operator.yaml
     kubectl apply -f metallb/metallb-operator.yaml
     ```
   - This should give you an operator for MetalLB in the `metallb-system` namespace
@@ -236,18 +242,46 @@ private-ips         true          false             ["192.168.86.200/32"]
 public-entrypoint   true          false             ["134.195.227.140/32"]
 
 ```
+
 If you `describe` each of the `ippools` you should see the CIDR's matching that of MetalLB
+
+# ingress-nginx
+Now that everything's configured at Layer 4 (L4 - the IP pools we set up) it's time to manage things at Layer 7 (L7) and route HTTP requests! We'll use [ingress-nginx](https://github.com/kubernetes/ingress-nginx) as our ingress controller to do this.
+
+Unfortunately operator install via OLM is currently only supported for OpenShift clusters, so we'll [install with helm](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/main/docs/manual-installation.md).
+
+```
+CURRENT=$(pwd);
+mkdir /tmp/ingress-nginx;
+cd /tmp/ingress-nginx/;
+git clone https://github.com/nginxinc/nginx-ingress-helm-operator/ --branch v2.0.2;
+cd nginx-ingress-helm-operator;
+make deploy IMG=nginx/nginx-ingress-operator:2.0.2;
+cd $CURRENT
+```
+
+Verify that the nginx-ingress operator is up:
+```
+k get all -n nginx-ingress-operator-system
+```
+
+## Configuration
+We'll now create two services, one for traffic coming in on our public IP and one for traffic coming in on our private IP range.
+
+Create a namespace:
+```
+k apply -f ingress/namespace.yaml
+```
+
+And create the services:
+```
+k apply -f ingress/nginx-ingress-lb.yaml
+```
 
 # Argo CD
 [OperatorHub reference](https://operatorhub.io/operator/argocd-operator)
 
 1. Create a `subscription` to the ArgoCD  operator for the OLM
-  - You can grab the subscription manifest from here:
-      ```
-      curl https://operatorhub.io/install/argocd-operator.yaml > argocd/argocd-operator-subscription.yaml
-      ```
-  - Or use the manifest already at `argocd/argocd-operator-subscription.yaml`
-2. Create the subscription
     ```
     k apply -f argocd/argocd-operator-subscription.yaml
     ```
