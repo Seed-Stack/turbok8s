@@ -4,7 +4,7 @@ turbok8s (*"turbo k8s"* or *"turbo kube"*) enhances a kubernetes cluster with bo
 The input to turbok8s is a cluster. The output of turbok8s is a turbo-charged cluster with all the useful stuff ready to go! turbok8s is cluster and cloud-provider agnostic, provided the minimum hardware requirements are met.
 
 # Status
-Turbok8s is under active development. The [hand](hand/README.md) deploy method is first being worked, to be followed up by a [kustomize](kustomize/README.md) install method.
+Turbok8s is under active development. The [hand](hand/README.md) deploy guide serves as a tutorial and the only way to set up turbok8s currently.
 
 # Philisophy and Goals
 The purpose behind turbok8s is to provide an easy way run your application in kubernetes, with perfect parity across all of your environments, while also removing the chore of installing the same services over and over. If you are deploying an application to Kubernetes, the mission of turbok8s is to give you all the tools you need to do that with minimal configuration, and be up in running in minutes, while also being prod-ready and ready to scale. turbok8s in its default form gives you "everything you'll probably want" to run your applicaiton.
@@ -36,7 +36,7 @@ Being opinionated, we prefer installing things into Kubernetes via certain metho
 Assuming you run your cluster on some type of public cloud or Virtual Server Provider (VPS), turbok8s aims to give you predictiable, fixed monthly costs, which are especially crucial for startups, small teams, and solo devs. Variable monthly costs are one of the primary reasons we believe so strongly in self-hosting wherever possible on k8s! turbok8s strives to give you a fixed monthly operational cost, which only increases when you are actually ready to scale, while still remaining fixed and your desired scale.
 
 ## Case Study
-We use vultr for the development of turbok8s. We aren't endorsed by them but we do prefer using VPS over public cloud. The current form of turbok8s runs on the smallest-possible vultr cluster: a 2vCPU 2GRAM single node, which is managed by vultr's kubernetes control plane (think GKE or AKS). In it's original form, this cost $20/mo because turbok8s also used a load balancer provider by vultr: $10/mo for the node, $10/mo for the LB. 
+We use vultr for the development of turbok8s. We aren't endorsed by them but we do prefer using VPS over public cloud. The current form of turbok8s runs on the smallest-possible vultr cluster: a 2vCPU 4GRAM single node, which is managed by vultr's kubernetes control plane (think GKE or AKS). In it's original form, this cost $20/mo because turbok8s also used a load balancer provider by vultr: $10/mo for the node, $10/mo for the LB. 
 
 This turned out to be a great driver and motivator for the philisophy of turbok8s: we could do better! This is what led us to purchasing a public IP for $3/mo and managing it with metalLB instead. The entire setup now only costs $13/mo! This is obviously a minimal form, being single-node, however due to using vultr's managed control plane this is an HA setup and can absolutely scale when the need arises.
 
@@ -46,7 +46,7 @@ The case study and the development of turbok8s itself demonstrate several things
 
 
 # Hardware Requirements
-This has not been extensively tested yet to find out the limits, but everything runs just fine on a 2CPU 4G RAM system. You can probably get away with less as well.
+This has not been extensively tested yet to find out the limits, but everything runs just fine on a 2CPU 4G RAM system.
 
 ## Cluster-Specific Things
 - turbok8s is tested and configured with [calico](https://github.com/projectcalico/calico) for its [CNI](https://github.com/containernetworking/cni). This doesn't mean others won't work, but in the name of "picking one to get things working", Calico is assumed and guides and default configuration will reference it
@@ -73,10 +73,8 @@ turbok8s is not perfect. Tools included here are not any better or worse than al
 # Acknowledgement
 turbok8s would not be possible without all of the wonderful tools upon which it relies!
 
-# Running
+# Running / Getting Started
 There are various ways to get started with turbok8s. For an in-depth, manual, and totally-configurable experience that still takes under an hour see [hand deploy](hand/README.md).
-
-For a one-liner that's still just as configurable and you can "hit go and go make coffee" see [kustomize](kustomize/README.md)
 
 ### services
 Because most personal machines aren't directly exposed to the internet, there are only a small subset of useful services that are currently spun up locally, however the ultimate goal is to be able to run everthing locally so you can mirror production.
@@ -96,10 +94,11 @@ This is the list of services turbok8s plans to support. A checkbox indicates thi
 
 - [ ] StackGres
   - Horizontally-scaling Postgresql DB
+  - Also considering https://operatorhub.io/operator/cloudnative-pg
 - [x] MetalLB
   - Manage both public and private IP addresses
-  - Works with the nginx-ingress controller to allow virtual hosting of infinite domains behind a single public IP address
-- [x] nginx-ingress
+  - Works with the ingress-nginx controller to allow virtual hosting of infinite domains behind a single public IP address
+- [x] ingress-nginx
   - Manage routing to services
   - Set up for virtual hosting
 - [x] cert-manager
@@ -130,10 +129,12 @@ Managed by Pulumi on Vultr - use whatever you see fit for your own clusters!
 `kubectl apply -f stackgres-operator.yml`
 
 ## MetalLB
-Software load balancing so we can do virtual hosting of a theoritically infinite amount of sites. This load-balances a single public IP, which `nginx-ingress` then uses to route traffic based on the actual domain and route
+Software load balancing so we can do virtual hosting of a theoritically infinite amount of sites. This load-balances a single public IP, which `ingress-nginx` then uses to route traffic based on the actual domain and route
 
-## nginx-ingress
+## ingress-nginx
 Ingress controller. Examines URL's for domain and path. Works with metal-lb, and in this configuration allows us to virtual host as much as we want behind a single public IP
+
+Also considering Traeffic but not yet explored
 
 ## cert-manager
 Installed statically with `kubectl apply ...` per [instructions](https://cert-manager.io/docs/installation/), uses `cluster-issuer-acme.yaml` to create a ClusterIssuer, which will reach out to [Let'sEncrypt](https://letsencrypt.org/) to sign Certificate Requests.
