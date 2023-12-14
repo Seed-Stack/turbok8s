@@ -1,0 +1,45 @@
+# Grab a public IP from metalLB and use it to listen for all traffic coming into the cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-ingress-public
+  namespace: nginx-ingress
+  annotations:
+    metallb.universe.tf/address-pool: public-entrypoint
+spec:
+  externalTrafficPolicy: Local
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  - port: 443
+    targetPort: 443
+    protocol: TCP
+    name: https
+  selector:
+    app: nginx-ingress
+---
+# Grab a public IP from metalLB and use it to listen for all traffic coming into the cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-ingress-private
+  namespace: nginx-ingress
+  annotations:
+    metallb.universe.tf/address-pool: private-ips
+spec:
+  externalTrafficPolicy: Local
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  - port: 443
+    targetPort: 443
+    protocol: TCP
+    name: https
+  selector:
+    app: nginx-ingress

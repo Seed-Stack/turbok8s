@@ -1,0 +1,19 @@
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
+metadata:
+  name: private-ips
+spec:
+  cidr: # <ADD HERE> simulate private VPC subnet, in this case a slice of your LAN
+  natOutgoing: true
+  disabled: false
+  nodeSelector: all()
+---
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
+metadata:
+  name: public-entrypoint
+spec:
+  cidr: # <ADD HERE> simulate a public IP you would own/lease in the cloud/datacenter
+  natOutgoing: false
+  disabled: false # simulate a single public IP you'd pay for
+  nodeSelector: all()
