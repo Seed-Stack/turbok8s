@@ -28,7 +28,7 @@ This is just for setting up a basic cluster for testing, because otherwise Turbo
 If you want to use MetalLB see [Local Cluster Networking Setup](./README.md#local-1)
 If you're running locally and **don't plan on using MetalLB**, start `minikube` like so:
 ```
-minikube start--memory='4G' --cpus='2'
+minikube start --memory='4G' --cpus='2'
 ```
 
 ## Prod-like / Cloud / Datacenter
@@ -159,19 +159,13 @@ The [Operator Lifecycle Manager](https://olm.operatorframework.io/) is a wonderf
 MetalLB allows your cluster to perform load balancing itself! One of the most expensive aspects of cloud hosting is paying for load balancers, so doing this in-cluster is a great way to go.
 
 ## OperatorHub (alpha)
-This pathway is not yet working, but is the ultimate goal.
+[OLM Reference](https://operatorhub.io/operator/metallb-operator)
 
-1. Create a `subscription` to the [MetalLB Operator](https://operatorhub.io/operator/metallb-operator) for the OLM
-  - You can grab the subscription manifest from here:
-      ```
-      curl https://operatorhub.io/install/metallb-operator.yaml > metallb/metallb-operator-subscription.yaml
-      ```
-  - Or use the manifest already at `metallb/metallb-operator-subscription.yaml`
-2. Create the subscription
+1. Create the subscription - note the use of `create` and not `apply`:
     ```
-    k apply -f metallb/metallb-operator-subscription.yaml
+    k create -f metallb/metallb-operator-subscription.yaml
     ```
-3. Verify the operator is up - specifically make sure that `PHASE` is `Succeeded`, not `Installing` or anything else. You can `watch` with `-w`
+2. Verify the operator is up - specifically make sure that `PHASE` is `Succeeded`, not `Installing` or anything else. You can `watch` with `-w`
     ```
     k get clusterserviceversions -n operators
 
@@ -180,33 +174,13 @@ This pathway is not yet working, but is the ultimate goal.
     metallb-operator.v0.13.11   MetalLB Operator   0.13.11   metallb-operator.v0.13.3   Succeeded
     ```
 
-## Manifest (stable)
-The current way of installing MetalLB does still work with an operator, but not through Operator Hub.
-
-1. Grab the MetalLB manifest and apply it:
-    ```
-    curl https://raw.githubusercontent.com/metallb/metallb-operator/v0.13.11/bin/metallb-operator.yaml > metallb/metallb-operator.yaml
-    kubectl apply -f metallb/metallb-operator.yaml
-    ```
-  - This should give you an operator for MetalLB in the `metallb-system` namespace
-  - Verify that your `metallb-operator-controller-manager` and `metallb-operator-webhook-server` deployments are running
-    ```
-    k get deploy -n metallb-system
-    NAME                                                            DESIRED   CURRENT   READY   AGE
-    replicaset.apps/metallb-operator-controller-manager-57f5844df   1         1         1       106s
-    replicaset.apps/metallb-operator-webhook-server-678dbcb959      1         1         1       106s
-    ```
-  - This will also install all of the MetalLB CRD's
-    ```
-    k get crd | grep -i metallb
-    ```
-2. Create a MetalLB resource
+3. Create a MetalLB resource
     ```
     k apply -f metallb/metallb.yaml
     ```
   - This will launch the "functional" parts of MetalLB, you should see the `speaker` and `controller` running
     ```
-    k get deploy -n metallb-system --field-selector metadata.name=controller
+    k get deploy -n operators --field-selector metadata.name=controller
     
     NAME         READY   UP-TO-DATE   AVAILABLE   AGE
     controller   1/1     1            1           9m37s
@@ -216,7 +190,6 @@ The current way of installing MetalLB does still work with an operator, but not 
     NAME      DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
     speaker   1         1         1       1            1           kubernetes.io/os=linux   10m
     ```
-
 
 ## Configuration
 We need to give MetalLB some IP's to manage! Generally-speaking, and how turbok8s behaves in its default configuration, you'll want a *pool* of private IP's, and at least one *public* IP (but you could have a pool if you want). The private IP pool corresponds to a range of IP's in your private network you want to load balance on, whereas the [public ip](../README.md#external-inputs-and-extra-cluster-requirements-and-assumptions) would typically be something you pay for to serve as the "public entrypoint" into your cluster. 
@@ -281,9 +254,9 @@ k apply -f ingress/nginx-ingress-lb.yaml
 # Argo CD
 [OperatorHub reference](https://operatorhub.io/operator/argocd-operator)
 
-1. Create a `subscription` to the ArgoCD  operator for the OLM
+1. Create a `subscription` to the ArgoCD  operator for the OLM (note the use of **create** here and not **apply**)
     ```
-    k apply -f argocd/argocd-operator-subscription.yaml
+    k create -f argocd/argocd-operator-subscription.yaml
     ```
 3. Verify the operator is up - specifically make sure that `PHASE` is `Succeeded`, not `Installing` or anything else. You can `watch` with `-w`
     ```
@@ -342,3 +315,33 @@ k apply -f ingress/nginx-ingress-lb.yaml
       ```
     - You can use this to log in from your browser for the `admin` user
     - NOTE: If the output ends in a `%`, *omit* the `%`, as this is simply indicating that there's no `newline` in the output, not a character that's actually part of the password
+
+# cert-manager
+[Operatorhub Reference](https://operatorhub.io/operator/cert-manager)
+1. Create a subscription:
+  ```
+  k create -f cert-manager/cert-manager-operator-subscription.yaml
+  ```
+2. You should now see a `cert-manager` operator
+  ```
+  k get operators
+
+  # something like
+  NAME                        AGE
+  argocd-operator.operators   29m
+  cert-manager.operators      99s
+  ```
+
+## Configuration
+We'll want to create some `ClusterIssuer` resources to intercept our TLS ingress annotations and go fetch certificates.
+
+Edit `cluster-issuer-acme-prod.yaml` and `cluster-issuer-acme-staging.yaml` and add an email address you'd like to receive notifications to for when your certificates will renew.
+
+1. Create `staging` and `prod` ClusterIssuers
+
+  ```
+  k apply -f cert-manager/cluster-issuer-acme-staging.yaml
+  k apply -f cert-manager/cluster-issuer-acme-prod.yaml
+  ```
+
+These will use the Let'sEncrypt Certificate Authority to automatically give you self-renewing TLS certificates!
