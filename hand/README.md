@@ -172,6 +172,7 @@ MetalLB allows your cluster to perform load balancing itself! One of the most ex
     # should look like this
     NAME                        DISPLAY            VERSION   REPLACES                   PHASE
     metallb-operator.v0.13.11   MetalLB Operator   0.13.11   metallb-operator.v0.13.3   Succeeded
+    ```
 
 3. Create a MetalLB resource
     ```
@@ -319,7 +320,7 @@ k apply -f ingress/nginx-ingress-lb.yaml
 [Operatorhub Reference](https://operatorhub.io/operator/cert-manager)
 1. Create a subscription:
   ```
-  k apply -f cert-manager/cert-manager-operator-subscription.yaml
+  k create -f cert-manager/cert-manager-operator-subscription.yaml
   ```
 2. You should now see a `cert-manager` operator
   ```
@@ -330,3 +331,17 @@ k apply -f ingress/nginx-ingress-lb.yaml
   argocd-operator.operators   29m
   cert-manager.operators      99s
   ```
+
+## Configuration
+We'll want to create some `ClusterIssuer` resources to intercept our TLS ingress annotations and go fetch certificates.
+
+Edit `cluster-issuer-acme-prod.yaml` and `cluster-issuer-acme-staging.yaml` and add an email address you'd like to receive notifications to for when your certificates will renew.
+
+1. Create `staging` and `prod` ClusterIssuers
+
+  ```
+  k apply -f cert-manager/cluster-issuer-acme-staging.yaml
+  k apply -f cert-manager/cluster-issuer-acme-prod.yaml
+  ```
+
+These will use the Let'sEncrypt Certificate Authority to automatically give you self-renewing TLS certificates!

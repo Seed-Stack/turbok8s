@@ -4,7 +4,7 @@ metadata:
   name: acme-staging
 spec:
   acme:
-    email: # your ACME email
+    email: # email you want to receive alerts for about cert renewals
     server: https://acme-staging-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: acme-staging
