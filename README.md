@@ -144,11 +144,8 @@ Argo is built on the [gitops engine](https://github.com/argoproj/gitops-engine).
 
 ## tekton
 CI tool. 
-Installed as an [operator](https://tekton.dev/docs/operator/), one-liner:
 
-```
-kubectl apply -f https://storage.googleapis.com/tekton-releases/operator/previous/v0.68.1/release.yaml
-```
+[Tekton](./hand/tekton/README.md)
 
 ### kaniko
 This is not an operator itself, a tool that can be used in the cluster for building images. Use tekton pipelines to run kaniko
