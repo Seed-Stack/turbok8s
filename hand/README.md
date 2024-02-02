@@ -158,14 +158,14 @@ The [Operator Lifecycle Manager](https://olm.operatorframework.io/) is a wonderf
 # MetalLB
 MetalLB allows your cluster to perform load balancing itself! One of the most expensive aspects of cloud hosting is paying for load balancers, so doing this in-cluster is a great way to go.
 
-## OperatorHub (alpha)
+## OperatorHub
 [OLM Reference](https://operatorhub.io/operator/metallb-operator)
 
 1. Create the subscription - note the use of `create` and not `apply`:
     ```
     k create -f metallb/metallb-operator-subscription.yaml
     ```
-2. Verify the operator is up - specifically make sure that `PHASE` is `Succeeded`, not `Installing` or anything else. You can `watch` with `-w`
+2. Verify the operator is up - specifically make sure that `PHASE` is `Succeeded`, not `Installing` or anything else. Give this a minute or two, you may not see anything happening initially. You can `watch` with `-w`
     ```
     k get clusterserviceversions -n operators
 
@@ -190,6 +190,8 @@ MetalLB allows your cluster to perform load balancing itself! One of the most ex
     NAME      DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
     speaker   1         1         1       1            1           kubernetes.io/os=linux   10m
     ```
+
+
 
 ## Configuration
 We need to give MetalLB some IP's to manage! Generally-speaking, and how turbok8s behaves in its default configuration, you'll want a *pool* of private IP's, and at least one *public* IP (but you could have a pool if you want). The private IP pool corresponds to a range of IP's in your private network you want to load balance on, whereas the [public ip](../README.md#external-inputs-and-extra-cluster-requirements-and-assumptions) would typically be something you pay for to serve as the "public entrypoint" into your cluster. 
